@@ -1,19 +1,7 @@
 <template>
-  <div class="work-form">
-    <h3>作品登録フォーム</h3>
-    <form @submit.prevent="saveWork" @keydown.enter.prevent>
-      <!-- Pixiv ID -->
-      <div class="form-group">
-        <label>Pixiv作品ID</label>
-        <input v-model="pixivId" />
-      </div>
-
-      <!-- Title -->
-      <div class="form-group">
-        <label>自分用タイトル</label>
-        <input v-model="title" />
-      </div>
-
+  <div class="search-form">
+    <h3>作品検索フォーム</h3>
+    <form @submit.prevent="searchWorks" @keydown.enter.prevent>
       <!-- Type -->
       <div class="form-group">
         <label>作品タイプ</label>
@@ -46,26 +34,49 @@
         </div>
       </div>
 
-      <!-- Submit -->
+      <!-- Search button -->
       <div class="form-actions">
-        <button type="submit">保存</button>
+        <button type="submit">検索</button>
       </div>
     </form>
+
+    <!-- Results -->
+    <div class="results" v-if="results.length > 0">
+      <h4>検索結果</h4>
+      <ul>
+        <li v-for="(work, index) in results" :key="index">
+          <a :href="work.type === 'novel'
+              ? `https://www.pixiv.net/novel/show.php?id=${work.pixiv_id}`
+              : `https://www.pixiv.net/artworks/${work.pixiv_id}`"
+             target="_blank">
+            {{ work.title }} ({{ work.type }})
+          </a>
+          <small>タグ: {{ work.tags?.join('　') || '' }}</small>
+        </li>
+      </ul>
+    </div>
+
+    <div v-else>
+      <p>検索結果はありません</p>
+    </div>
   </div>
 </template>
 
 <script setup>
 import { ref } from "vue";
 
-const pixivId = ref("");
-const title = ref("");
 const type = ref("illustration");
 const tagInput = ref("");
 const tags = ref([]);
+const results = ref([]);
+
+// 仮のユーザーID（ログイン機能実装時に変更）
+const userId = 1;
 
 const addTag = () => {
-  if (tagInput.value.trim() && !tags.value.includes(tagInput.value.trim())) {
-    tags.value.push(tagInput.value.trim());
+  const trimmed = tagInput.value.trim();
+  if (trimmed && !tags.value.includes(trimmed)) {
+    tags.value.push(trimmed);
     tagInput.value = "";
   }
 };
@@ -74,31 +85,20 @@ const removeTag = (index) => {
   tags.value.splice(index, 1);
 };
 
-const saveWork = async () => {
-  if (tagInput.value.trim()) addTag(); // 入力中のタグも追加
-  if (tags.value.length === 0) {
-    alert("タグを1つ以上追加してください");
-    return;
-  }
-
-  await fetch(`${import.meta.env.VITE_API_URL}/api/works`, {
+const searchWorks = async () => {
+  const response = await fetch(`${import.meta.env.VITE_API_URL}/api/search`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      userId: 1,
-      pixivId: pixivId.value,
-      title: title.value,
       type: type.value,
       tags: tags.value,
+      userId, // ←ここを追加
     }),
   });
 
-  alert("保存しました！");
-  pixivId.value = "";
-  title.value = "";
-  type.value = "illustration";
-  tags.value = [];
+  results.value = await response.json();
 };
 </script>
+
 
 
