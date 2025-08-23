@@ -110,7 +110,7 @@ const fetchSuggestions = async () => {
     return;
   }
   const res = await fetch(
-    `${import.meta.env.VITE_API_URL}/api/tags/suggest?q=${encodeURIComponent(q)}`
+    `${import.meta.env.VITE_API_URL}/api/tags?q=${encodeURIComponent(q)}`
   );
   if (res.ok) {
     suggestions.value = await res.json();
@@ -144,5 +144,6 @@ const saveWork = async () => {
   tags.value = [];
 };
 </script>
+
 
 
