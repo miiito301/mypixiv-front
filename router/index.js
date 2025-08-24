@@ -1,0 +1,31 @@
+import { createRouter, createWebHistory } from "vue-router";
+import Form from "../src/components/Form.vue";
+import Search from "../src/components/Search.vue";
+import Login from "../src/components/Login.vue";
+
+const routes = [
+  { path: "/", redirect: "/login" },
+  { path: "/form", component: Form, meta: { requiresAuth: true } },
+  { path: "/search", component: Search, meta: { requiresAuth: true } },
+  { path: "/login", component: Login },
+];
+
+const router = createRouter({
+  history: createWebHistory(),
+  routes,
+});
+
+// 認証ガード
+router.beforeEach((to, from, next) => {
+  const isAuthenticated = !!localStorage.getItem("token");
+
+  if (to.meta.requiresAuth && !isAuthenticated) {
+    next("/login");
+  } else if (to.path === "/login" && isAuthenticated) {
+    next("/form");
+  } else {
+    next();
+  }
+});
+
+export default router;
